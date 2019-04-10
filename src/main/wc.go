@@ -10,7 +10,7 @@ import "container/list"
 // key to the Map function, as in the paper; only a value,
 // which is a part of the input file content. the return
 // value should be a list of key/value pairs, each represented
-// by a mapreduce.KeyValue.
+// by a mapreduce.KeyValue..
 func Map(value string) *list.List {
 }
 
