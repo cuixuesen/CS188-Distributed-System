@@ -28,10 +28,7 @@ func (mr *MapReduce) KillWorkers() *list.List {
 	return l
 }
 
-func (mr *MapReduce) mynRPC(availableWorker string,args *DoJobArgs) bool {
-	var reply DoJobReply
-	return call(availableWorker,"Worker.DoJob",args, &reply)
-}
+
 
 func (mr *MapReduce) RunMaster() *list.List {
 	// Your code here
@@ -51,8 +48,8 @@ func (mr *MapReduce) RunMaster() *list.List {
 								mutex.Unlock()
 
 						}
-
-						if  mr.mynRPC(availableWorker,&DoJobArgs{mr.file, Map, j, mr.nReduce}){
+						var reply DoJobReply
+						if call(availableWorker,"Worker.DoJob",&DoJobArgs{mr.file, Map, j, mr.nReduce}, &reply) {
 							nmapChannel <- "map"
 							mr.myChannel <-availableWorker
 							return
@@ -76,8 +73,8 @@ func (mr *MapReduce) RunMaster() *list.List {
 								 mr.Workers[availableWorker]=&WorkerInfo{availableWorker}
 								 mutex.Unlock()
 						}
-
-						if mr.mynRPC(availableWorker,&DoJobArgs{mr.file, Reduce, j, mr.nMap}){
+						var reply DoJobReply
+						if call(availableWorker,"Worker.DoJob",&DoJobArgs{mr.file, Reduce, j, mr.nMap}, &reply) {
 							nreduceChannel <- "reduce"
 							mr.myChannel <-availableWorker
 							return
