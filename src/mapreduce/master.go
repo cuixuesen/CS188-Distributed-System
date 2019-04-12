@@ -29,10 +29,10 @@ func (mr *MapReduce) KillWorkers() *list.List {
 }
 
 
-
+//assign map and reduce jobs to workers through RPC in parallel
 func (mr *MapReduce) RunMaster() *list.List {
 	// Your code here
-	var nmapChannel = make(chan string)
+	var nmapChannel    = make(chan string)
   var nreduceChannel = make(chan string)
   var mutex = &sync.Mutex{}
 	// start to map
@@ -48,18 +48,17 @@ func (mr *MapReduce) RunMaster() *list.List {
 								mutex.Unlock()
 
 						}
-						var reply DoJobReply
-						if call(availableWorker,"Worker.DoJob",&DoJobArgs{mr.file, Map, j, mr.nReduce}, &reply) {
+						//RPC to remote work to start mapping
+						if call(availableWorker, "Worker.DoJob", &DoJobArgs{mr.file, Map, j, mr.nReduce}, &DoJobReply{}) {
 							nmapChannel <- "map"
 							mr.myChannel <-availableWorker
-							return
+						  return
 						}
-					}
-
-		 }(i)
+				}
+		}(i)
 	}
 	// wait worker finish mapping
-	for i:=0; i<mr.nMap;i++{ <-nmapChannel }
+	for i:=0; i<mr.nMap;i++ { <-nmapChannel }
 
 	// start to reduce
 	for i:=0; i < mr.nReduce; i++ {
@@ -73,17 +72,17 @@ func (mr *MapReduce) RunMaster() *list.List {
 								 mr.Workers[availableWorker]=&WorkerInfo{availableWorker}
 								 mutex.Unlock()
 						}
-						var reply DoJobReply
-						if call(availableWorker,"Worker.DoJob",&DoJobArgs{mr.file, Reduce, j, mr.nMap}, &reply) {
+						//RPC to remote work to start reducing
+						if call(availableWorker, "Worker.DoJob", &DoJobArgs{mr.file, Reduce, j, mr.nMap}, &DoJobReply{}) {
 							nreduceChannel <- "reduce"
 							mr.myChannel <-availableWorker
 							return
 						}
-		 		}
-		 }(i)
+				}
+		}(i)
 	}
 	//wait worker finish reducing
-	for i:=0; i<mr.nReduce;i++{ <-nreduceChannel }
+	for i:=0; i<mr.nReduce;i++ { <-nreduceChannel }
 
 	return mr.KillWorkers()
 }
